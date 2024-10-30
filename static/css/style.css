@@ -1,0 +1,78 @@
+h1 {
+    border: 2px #eee solid;
+    color: brown;
+    text-align: center;
+    padding: 10px;
+}
+
+
+
+.steak-button {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  padding: 5px;
+  text-align: 'right';
+    
+  }
+
+label{
+    cursor: pointer;
+    display: inline-block;
+    padding: 3px 6px;
+    text-align: right;
+    width: 150px;
+    vertical-align: top;
+}
+.form-center {
+	display:flex;
+	justify-content: center;
+}
+
+body{
+    background-image: url('test.jpg');
+    background-size:     cover;                      /* <------ */
+    background-repeat:   no-repeat;
+    background-position: center center; 
+
+}
+
+.wrapper {
+    text-align: center;
+}
+
+.button {
+    position: absolute;
+    right: 50%;
+}
+
+table {
+    border: 1px solid black;
+    font-size: 13px;
+    table-layout: fixed;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+  }
+  
+  th {
+    border: 1px solid black;
+    padding: 8px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: center;
+    background-color: #d48a1b;
+    color: white;
+  }
+  tr:nth-child(even){background-color: #f2f2f2;}
+  tr:nth-child(odd){background-color: #52ca8e;}
+  tr:hover {background-color: #ddd;}
+  td {
+    border: 1px solid black;
+    overflow: hidden;
+    text-align: center;
+
+  }
+
