@@ -334,3 +334,163 @@ def fedex_test_multiple(fromcode,tocode,noitems,mcweight,country,length, width, 
 
 # print(test1)
 # print(test2)
+
+
+def fedex_test_list(fromcode,tocode,noitems,mcweight,country,length, width, height,from_loc,to_loc):
+
+    fedex_data=[]
+    fedex_tax=[]
+
+
+    
+    # fromcode="E3B3V5"
+    # tocode="E3B4C3"
+    # country ="CA"
+    # mcweight=8
+
+    
+    tkn = "token"
+    pcdb = PostalCodeDatabase()
+
+
+    file_check = check_folder_and_set_variable()
+    print (file_check)
+
+    token = check_folder_and_run_code(file_check)
+
+    item=[]
+    totalweight=0
+    totalitems=0
+
+    for i in range(len(length)):
+        temp={
+                    "subPackagingType": "BAG",
+                    "groupPackageCount": 1,
+    
+                    "weight": {
+                        "units": "LB",
+                        "value": mcweight[i]
+                    },
+                    "dimensions": {
+                        "length": length[i],
+                        "width": width[i],
+                        "height": height[i],
+                        "units": "IN"
+                    }
+                }
+        item.append(temp)
+        totalweight += float(mcweight[i])
+        totalitems += int(noitems[i])
+
+
+
+
+
+	
+    #response1 = requests.request("POST", url1, data=payload1, headers=headers1)
+    #token = json.loads(response1.text)['access_token']
+    print(token)
+    url = "https://apis.fedex.com/rate/v1/rates/quotes"
+    headers = {
+        'Content-Type': "application/json",
+        'X-locale': "en_CA",
+        'Authorization': 'Bearer '+ token
+    }
+
+    query1= {
+        "accountNumber": {"value": "458975000"},
+        "rateRequestControlParameters": {"returnTransitTimes": "true"},
+        "requestedShipment": {
+            "preferredCurrency": "CAD",
+            "rateRequestType": ["PREFERRED"],
+            "shipper": {
+                "address": {
+                    "postalCode": fromcode,
+                    "countryCode": country
+                }
+            },
+            "recipient": {
+                "address": {
+                    "postalCode": tocode,
+                    "countryCode": country
+                }
+            },
+            "pickupType": "DROPOFF_AT_FEDEX_LOCATION",
+            "packagingType": "YOUR_PACKAGING",
+            "requestedPackageLineItems": item
+        }
+    }
+    # query1 = {"accountNumber": {"value": "458975000"},"rateRequestControlParameters": {"returnTransitTimes": "true",},"requestedShipment": {"preferredCurrency": "CAD","rateRequestType": ["PREFERRED"],"shipper": {"address": {"postalCode": fromcode,"countryCode": "CA"}},"recipient": {"address": {"postalCode": tocode,"countryCode": country}},"pickupType": "DROPOFF_AT_FEDEX_LOCATION","packagingType": "YOUR_PACKAGING","requestedPackageLineItems": [{ "weight": {"units": "LB","value": mcweight},}]}}
+   
+    query1 = json.dumps(query1)
+    try:
+        response2 = requests.request("POST", url, data=query1, headers=headers)
+        response3 = response2.json()
+        print(response3)
+        # print(response3['output']['rateReplyDetails'][1])
+        
+        for i in response3['output']['rateReplyDetails']:
+            if "transitDays" in i["commit"]:
+                temp={
+                    "Provider":"Fedex",
+                    "Service Type": i['serviceName'],
+                    'ShipDate': datetime.today().strftime('%Y-%m-%d'),
+                    "From":from_loc,
+                    "To":to_loc,
+                    "QuoteTotal":i['ratedShipmentDetails'][0]['totalNetFedExCharge'],
+                    "No of days for delivery (Estimated)":i["commit"]["transitDays"]['description'],
+                    "No of items":totalitems,
+                    "weight":totalweight
+                }
+            else:
+                temp={
+                    "Provider":"Fedex",
+                    "Service Type": i['serviceName'],
+                    'ShipDate': datetime.today().strftime('%Y-%m-%d'),
+                    "From":from_loc,
+                    "To":to_loc,
+                    "QuoteTotal":i['ratedShipmentDetails'][0]['totalNetFedExCharge'],
+                    "No of days for delivery (Estimated)":"1",
+                    "No of items":totalitems,
+                    "weight": totalweight
+                }
+            temp_tax={
+                "Provider":"Fedex",
+                "Service Type": i['serviceName'],
+                "Description":i['ratedShipmentDetails'][0]['shipmentRateDetail']['surCharges'][0]['description'],
+                "Amount":i['ratedShipmentDetails'][0]['shipmentRateDetail']['surCharges'][0]['amount']
+            }
+            temp_tax_2={
+                "Provider":"Fedex",
+                "Service Type": i['serviceName'],
+                "Description":i['ratedShipmentDetails'][0]['shipmentRateDetail']['taxes'][0]['description'],
+                "Amount":i['ratedShipmentDetails'][0]['shipmentRateDetail']['taxes'][0]['amount']
+            }
+            fedex_tax.append(temp_tax)
+            fedex_tax.append(temp_tax_2)
+            fedex_data.append(temp)
+    except Exception as e:
+        send_error_email(str(e),"Fedex")
+        print(e)
+
+    print(fedex_data)
+    print("tax")
+    print(fedex_tax)
+    fedex_data=pd.DataFrame(fedex_data)
+    fedex_tax=pd.DataFrame(fedex_tax)
+    return fedex_data,fedex_tax
+
+
+# fromcode = 'K1A0B1'
+# tocode = 'V5H2N2'
+# noitems = ['7', '8', '5']
+# mcweight = ['30', '40', '50']
+# length =['20', '15', '30']
+# width = ['10', '10', '10']
+# height = ['15', '10', '20']
+# # from_loc = 'Ottawa'
+# # to_loc = 'Vancouver'
+# country="CA"
+
+# data,tax = fedex_test_list(fromcode, tocode, noitems, mcweight,country, length, width, height)
+# print(data,tax)
