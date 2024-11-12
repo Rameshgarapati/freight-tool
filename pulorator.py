@@ -509,3 +509,202 @@ def pulorator_multiple(fromcode,tocode,noitems,mcweight,length,width,height,noit
 # data,tax=pulorator(fromcode, tocode, noitems, mcweight, length, width, height)
 # print(data,tax)
 
+
+
+
+def pulorator_list(fromcode,tocode,noitems,mcweight,length,width,height,from_loc,to_loc):
+
+    pulorator_data = []
+    pulorator_tax = []
+    final_from=from_loc.split(",")[0]
+    final_province1=from_loc.split(",")[1][1:3]
+    final_to=to_loc.split(",")[0]
+    final_province2=to_loc.split(",")[1][1:3]
+    
+
+    try:
+        url = "https://webservices.purolator.com/PWS/V2/Estimating/EstimatingService.asmx?wsdl"
+        username = '90403ceda9a84bfaaa85ef9c57a495e8'
+        password = 'ukT5})SB'
+
+        # Create a client with username and password
+        client = Client(url, username=username, password=password)
+
+        # Create the necessary factory objects
+        RequestContext = client.factory.create('ns0:RequestContext')
+        RequestContext.Version = '2.0'
+        RequestContext.GroupID = 'xxx'
+        RequestContext.RequestReference = 'Rating Example'
+        RequestContext.Language = 'en'
+
+        # Set the SOAP headers
+        client.set_options(soapheaders=RequestContext)
+
+        # Define the Shipment object
+        Shipment = client.factory.create('ns0:Shipment')
+        Shipment.SenderInformation = client.factory.create('ns0:SenderInformation')
+        Shipment.SenderInformation.Address = client.factory.create('ns0:Address')
+        Shipment.SenderInformation.Address.Name = 'Arul Kannan'
+        Shipment.SenderInformation.Address.StreetNumber = '1234'
+        Shipment.SenderInformation.Address.StreetName = 'Main Street'
+        Shipment.SenderInformation.Address.City = 'Saint John'
+        Shipment.SenderInformation.Address.Province = final_province1
+        Shipment.SenderInformation.Address.Country = 'CA'
+        Shipment.SenderInformation.Address.PostalCode = fromcode
+        Shipment.SenderInformation.Address.PhoneNumber = client.factory.create('ns0:PhoneNumber')
+        Shipment.SenderInformation.Address.PhoneNumber.CountryCode = '1'
+        Shipment.SenderInformation.Address.PhoneNumber.AreaCode = '905'
+        Shipment.SenderInformation.Address.PhoneNumber.Phone = '5555555'
+
+        Shipment.ReceiverInformation = client.factory.create('ns0:ReceiverInformation')
+        Shipment.ReceiverInformation.Address = client.factory.create('ns0:Address')
+        Shipment.ReceiverInformation.Address.Name = 'Aaron Summer'
+        Shipment.ReceiverInformation.Address.StreetNumber = '2245'
+        Shipment.ReceiverInformation.Address.StreetName = 'Douglas Road'
+        Shipment.ReceiverInformation.Address.City = 'Burnaby'
+        Shipment.ReceiverInformation.Address.Province = final_province2
+        Shipment.ReceiverInformation.Address.Country = 'CA'
+        Shipment.ReceiverInformation.Address.PostalCode = tocode
+        Shipment.ReceiverInformation.Address.PhoneNumber = client.factory.create('ns0:PhoneNumber')
+        Shipment.ReceiverInformation.Address.PhoneNumber.CountryCode = '1'
+        Shipment.ReceiverInformation.Address.PhoneNumber.AreaCode = '604'
+        Shipment.ReceiverInformation.Address.PhoneNumber.Phone = '2982181'
+
+        # Function to set dimension
+        def set_dimension(value):
+            dim = client.factory.create('ns0:Dimension')
+            dim.Value = value
+            dim.DimensionUnit = 'in'
+            return dim
+
+        # Define two different Piece objects with dimensions
+        pieces_information = client.factory.create('ns0:ArrayOfPiece')
+
+# Define the Package Information
+        Shipment.PackageInformation = client.factory.create('ns0:PackageInformation')
+        Shipment.PackageInformation.ServiceID = 'PurolatorExpress'
+        Shipment.PackageInformation.TotalWeight = client.factory.create('ns0:TotalWeight')
+
+
+        finalweight=0
+
+        totalweight=0
+        totalItems=0
+        for i in range(len(length)):
+            piece1 = client.factory.create('ns0:Piece')
+            piece1.Weight = client.factory.create('ns0:Weight')
+            piece1.Weight.Value = float(mcweight[i])
+            piece1.Weight.WeightUnit = 'lb'
+            piece1.Length = set_dimension(int(length[i]))
+            piece1.Width = set_dimension(int(width[i]))
+            piece1.Height = set_dimension(int(height[i]))
+            pieces_information.Piece.append(piece1)
+            totalweight +=(float(mcweight[i])*int(noitems[i]))
+            finalweight +=float(mcweight[i])
+            totalItems+= int(noitems[i])
+
+        # First piece
+        # piece1 = client.factory.create('ns0:Piece')
+        # piece1.Weight = client.factory.create('ns0:Weight')
+        # piece1.Weight.Value = float(mcweight)
+        # piece1.Weight.WeightUnit = 'lb'
+        # piece1.Length = set_dimension(int(length))
+        # piece1.Width = set_dimension(int(width))
+        # piece1.Height = set_dimension(int(height))
+        # pieces_information.Piece.append(piece1)
+
+        # # Second piece
+        # piece2 = client.factory.create('ns0:Piece')
+        # piece2.Weight = client.factory.create('ns0:Weight')
+        # piece2.Weight.Value = 15
+        # piece2.Weight.WeightUnit = 'lb'
+        # piece2.Length = set_dimension(15)
+        # piece2.Width = set_dimension(15)
+        # piece2.Height = set_dimension(15)
+        # pieces_information.Piece.append(piece2)
+
+        # Define the Package Information
+        # Shipment.PackageInformation = client.factory.create('ns0:PackageInformation')
+        # Shipment.PackageInformation.ServiceID = 'PurolatorExpress'
+        # Shipment.PackageInformation.TotalWeight = client.factory.create('ns0:TotalWeight')
+        Shipment.PackageInformation.TotalWeight.Value = totalweight  
+        # sum(float(mcweight) for i in range(int(noitems)))
+        Shipment.PackageInformation.TotalWeight.WeightUnit = 'lb'
+        Shipment.PackageInformation.TotalPieces = totalItems
+        Shipment.PackageInformation.PiecesInformation = pieces_information
+
+        # Define the Payment Information
+        Shipment.PaymentInformation = client.factory.create('ns0:PaymentInformation')
+        Shipment.PaymentInformation.PaymentType = 'Sender'
+        Shipment.PaymentInformation.BillingAccountNumber = '4192710'
+        Shipment.PaymentInformation.RegisteredAccountNumber = '4192710'
+
+        # Define the Pickup Information
+        Shipment.PickupInformation = client.factory.create('ns0:PickupInformation')
+        Shipment.PickupInformation.PickupType = 'DropOff'
+
+        # Add the current date as the shipment date
+        current_date_str = datetime.now().strftime("%Y-%m-%d")
+        Shipment.ShipmentDate = current_date_str
+
+        # Define the ShowAlternativeServicesIndicator
+        ShowAlternativeServicesIndicator = True
+
+        # Make the request
+        response = client.service.GetFullEstimate(Shipment, ShowAlternativeServicesIndicator)
+
+        for i in response["ShipmentEstimates"]["ShipmentEstimate"]:
+            temp_rate = {
+                "Provider": "Purolator",
+                "Service Type": i["ServiceID"],
+                'ShipDate': i["ShipmentDate"],
+                "From": from_loc,
+                "To": to_loc,
+                "QuoteTotal": i["TotalPrice"],
+                "Delivery Date (Estimated)": i["ExpectedDeliveryDate"],
+                "No of days for delivery (Estimated)": i["EstimatedTransitDays"],
+                "No of items": totalItems,
+                "weight": finalweight
+            }
+            pulorator_data.append(temp_rate)
+
+            for j in i["Surcharges"][0]:
+                if j["Amount"] > 0:
+                    temp_tax = {
+                        "Provider": "Purolator",
+                        "Service Type": i["ServiceID"],
+                        "Description": j["Type"],
+                        "Amount": j["Amount"]
+                    }
+                    pulorator_tax.append(temp_tax)
+            for j in i["Taxes"][0]:
+                if j["Amount"] > 0:
+                    temp_tax = {
+                        "Provider": "Purolator",
+                        "Service Type": i["ServiceID"],
+                        "Description": j["Type"],
+                        "Amount": j["Amount"]
+                    }
+                    pulorator_tax.append(temp_tax)
+
+        return pd.DataFrame(pulorator_data), pd.DataFrame(pulorator_tax)
+
+    
+    except Exception as e:
+        send_error_email(str(e),"Purolator")
+        print(f"An error occurred: {e}")
+
+    return pd.DataFrame(), pd.DataFrame()
+
+
+# fromcode = 'E2K5P2'
+# tocode = 'E3B3V5'
+# noitems = ["2","3"]
+# mcweight = ["1.0","2.0"]
+# length = ["20","30"]
+# width = ["15","20"]
+# height = ["10","15"]
+
+
+# data,tax=pulorator_list(fromcode, tocode, noitems, mcweight, length, width, height)
+# print(data,tax)
